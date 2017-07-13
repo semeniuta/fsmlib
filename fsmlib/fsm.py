@@ -1,4 +1,5 @@
 import random
+import networkx as nx
 
 def parse_transition_func(tf_dict):
     pe = dict()
@@ -37,6 +38,10 @@ class FSM:
         self._current = start
 
     @property
+    def states(self):
+        return self._possible_events.keys()
+
+    @property
     def current_state(self):
         return self._current
 
@@ -50,9 +55,26 @@ class FSM:
 
     def advance(self, event):
         if not event in self.current_events:
-            raise Exception()
+            raise Exception("Event '{0}' is not possible in state {1}".format(event, self._current))
 
         self._current = self._transition_func[(self._current, event)]
 
     def advance_random(self):
         self.advance(get_random_next_event(self))
+
+    def to_networkx(self):
+
+        nxg = nx.DiGraph()
+
+        for state in self.states:
+            nxg.add_node(state)
+
+        nxg.add_node('init_dot', shape='point')
+        nxg.add_edge('init_dot', self._start)
+
+        for k, v in self._transition_func.items():
+            a, e = k
+            b = v
+            nxg.add_edge(a, b, label=e)
+
+        return nxg
